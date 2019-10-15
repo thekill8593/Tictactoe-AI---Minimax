@@ -7,6 +7,9 @@ class Game {
 		this.boardArray = ['','','','','','','','',''];		
 
 		this.board = document.getElementById('board');		
+		this.buttonPlay = document.getElementById('btn-play');
+		this.controls = document.getElementById('controls');
+		this.alert = document.getElementById('alert');
 
 		//add click event to columns
 		this.columns = [...this.board.getElementsByTagName('td')];		
@@ -20,15 +23,25 @@ class Game {
 				}
 				
 			});	
+		});		
+
+		this.buttonPlay.addEventListener('click', (e) => {
+			e.preventDefault();
+			this.restart();
 		});
 
 		this.paint();
 		
-	}
+	}	
 
 
-	run () {
-		console.log('start game');
+	restart() {
+		controls.style.display = 'none';
+
+		this.boardArray = ['','','','','','','','',''];
+		this.playerTurn = true;
+		this.paint();
+		
 	}
 
 	selected(index) { 
@@ -40,16 +53,25 @@ class Game {
 
 
 		const letter = this.playerTurn ? 'X' : 'O';
+
 		this.boardArray[index] = letter;
+
 		this.paint();
 		
-
-		if (this.winner()) {
-			console.log('winner');
+		const score = this.evaluate(this.boardArray);		
+		if (score !== 0) {
+			if (score == 10) {
+				this.alert.innerText = 'Computer wins';
+			} else {
+				this.alert.innerText = 'Player wins';
+			}
+			controls.style.display = 'flex';
+			return;
 		}
 
-		if (!this.canMove()) {
-			console.log('tie');
+		if (!this.isMovesLeft(this.boardArray)) {
+			this.alert.innerText = 'It\'s a draw!!';
+			controls.style.display = 'flex';
 			return;
 		}
 
@@ -58,27 +80,8 @@ class Game {
 		if (!this.playerTurn) {
 			this.computerMove();
 		}
-	}
+	}		
 	
-	canMove() {
-		return this.boardArray[0].length === 0 || this.boardArray[1].length === 0 || this.boardArray[2].length === 0 
-		|| this.boardArray[3].length === 0 || this.boardArray[4].length === 0 || this.boardArray[5].length === 0 
-		|| this.boardArray[6].length === 0 || this.boardArray[7].length === 0 || this.boardArray[8].length === 0;
-	}	
-
-	winner() {
-		return (this.boardArray[0].length > 0 && this.boardArray[1].length > 0 && this.boardArray[2].length > 0 && this.boardArray[0] === this.boardArray[1] && this.boardArray[0] === this.boardArray[2])
-			|| (this.boardArray[3].length > 0 && this.boardArray[4].length > 0 && this.boardArray[5].length > 0 && this.boardArray[3] === this.boardArray[4] && this.boardArray[3] === this.boardArray[5])
-			|| (this.boardArray[6].length > 0 && this.boardArray[7].length > 0 && this.boardArray[8].length > 0 && this.boardArray[6] === this.boardArray[7] && this.boardArray[6] === this.boardArray[8])
-			|| (this.boardArray[0].length > 0 && this.boardArray[4].length > 0 && this.boardArray[8].length > 0 && this.boardArray[0] === this.boardArray[4] && this.boardArray[0] === this.boardArray[8])
-			|| (this.boardArray[2].length > 0 && this.boardArray[4].length > 0 && this.boardArray[6].length > 0 && this.boardArray[2] === this.boardArray[4] && this.boardArray[2] === this.boardArray[6])
-			|| (this.boardArray[0].length > 0 && this.boardArray[3].length > 0 && this.boardArray[6].length > 0 && this.boardArray[0] === this.boardArray[3] && this.boardArray[0] === this.boardArray[6])			
-			|| (this.boardArray[1].length > 0 && this.boardArray[4].length > 0 && this.boardArray[7].length > 0 && this.boardArray[1] === this.boardArray[4] && this.boardArray[1] === this.boardArray[7])			
-			|| (this.boardArray[2].length > 0 && this.boardArray[5].length > 0 && this.boardArray[8].length > 0 && this.boardArray[2] === this.boardArray[5] && this.boardArray[2] === this.boardArray[8]);
-
-
-	}
-
 	paint() {
 		for (let i = 0; i < this.boardArray.length; i++) {
 			let el = document.getElementById('c' + (i+1));
@@ -87,9 +90,6 @@ class Game {
 	}
 
 	computerMove() {
-		//computer logic here
-		console.log('computing..');
-
 		let bestVal = -1000; 
 	    let bestMove = -1; 	    
 
@@ -104,10 +104,7 @@ class Game {
                     bestVal = moveVal; 
                 } 
 	    	}
-	    }
-  
-
-		console.log(bestVal, bestMove);
+	    }		
 
 		this.selected(bestMove);
 	}
@@ -116,33 +113,26 @@ class Game {
 	minimax(board, depth, isMax) {
         let score = this.evaluate(board); 
 
-       // console.log(score);
-
         if (score == 10) 
 	        return score; 	  
 	    
 	    if (score == -10) 
 	        return score; 
 	  
-	    // If there are no more moves and no winner then 
-	    // it is a tie 
+	    // If there are no more moves and no winner then it is a tie 	    
 	    if (!this.isMovesLeft(board)) 
 	        return 0; 
 
 		if (isMax) { 
-		    let best = -1000; 
+		    let best = -1000;
 		        
             for (let i = 0; i < board.length; i++) { 
                 // Check if cell is empty 
-                if (board[i].length === 0) {                 	
-                	
+                if (board[i].length === 0) {
                     // Make the move 
                     board[i] = 'O';	  
-                    // Call minimax recursively and choose 
-                    // the maximum value 
-                    best = Math.max(best, this.minimax(board, depth+1, !isMax) ); 
-  
-  					//console.log(best)
+                    // Call minimax recursively and choose the maximum value 
+                    best = Math.max(best, this.minimax(board, depth+1, !isMax)); 
                     // Undo the move 
                     board[i] = ''; 
                 }                 
@@ -158,10 +148,8 @@ class Game {
                 if (board[i].length === 0) {                	
                     // Make the move 
                     board[i] = 'X';	  
-                    // Call minimax recursively and choose 
-                    // the maximum value 
-                    best = Math.min(best, this.minimax(board, depth+1, !isMax)); 
-  					//console.log(best)
+                    // Call minimax recursively and choose the minimum value 
+                    best = Math.min(best, this.minimax(board, depth+1, !isMax));   					
                     // Undo the move 
                     board[i] = ''; 
                 } 
@@ -185,7 +173,7 @@ class Game {
 
 	///
 	evaluate(b){ 
-    // Checking for Rows for X or O victory. 
+    	// Checking for Rows for X or O victory. 
 	    if (this.boardArray[0].length > 0 && this.boardArray[1].length > 0 && this.boardArray[2].length > 0 && this.boardArray[0] === this.boardArray[1] && this.boardArray[0] === this.boardArray[2]) {
 	    	if (this.boardArray[0] === 'O') {
 	    		return 10;
@@ -209,6 +197,7 @@ class Game {
 	    		return -10;
 	    	}		
 	    }
+
 
 	    if (this.boardArray[0].length > 0 && this.boardArray[3].length > 0 && this.boardArray[6].length > 0 && this.boardArray[0] === this.boardArray[3] && this.boardArray[0] === this.boardArray[6]) {
 	    	if (this.boardArray[0] === 'O') {
@@ -262,8 +251,7 @@ class Game {
 
 
 window.addEventListener('load', () => {
-	const game = new Game();
-	game.run();	
+	const game = new Game();	
 })
 
 
